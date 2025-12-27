@@ -2,7 +2,7 @@ import db from '../config/database.js'
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
 
-// REGISTER
+// register
 export async function register(req, res) {
   const { name, email, password } = req.body
 
@@ -29,7 +29,7 @@ export async function register(req, res) {
   res.json({ message: 'Register berhasil' })
 }
 
-// LOGIN
+// login
 export async function login(req, res) {
   const { email, password } = req.body
 

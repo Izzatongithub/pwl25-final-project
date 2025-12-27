@@ -5,7 +5,8 @@ import {
   getBookings, 
   createBooking, 
   updateBookingStatus,
-  getUserBooking 
+  getUserBooking,
+  completeBooking 
 } from '../controllers/bookingController.js'
 import { verifyToken, isAdmin } from '../middlewares/authMiddleware.js'
 
@@ -28,5 +29,7 @@ router.get('/time-slots', verifyToken, getTimeSlots)
 
 // history booking
 router.get('/user', verifyToken, getUserBooking)
+
+router.put('/:id/complete', verifyToken, isAdmin, completeBooking)
 
 export default router

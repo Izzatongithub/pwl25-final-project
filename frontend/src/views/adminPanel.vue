@@ -3,7 +3,7 @@
     <h1>Admin Panel</h1>
     <button @click="logout" style="margin-bottom:20px">Logout</button>
 
-    <!-- Section Lapangan -->
+    <!-- section lapangan -->
     <section>
       <h2>Daftar Lapangan</h2>
       <table border="1" cellspacing="0" cellpadding="5">
@@ -50,12 +50,9 @@
             <td>{{ booking.field_name }}</td>
             <td>{{ formatDate(booking.booking_date) }}</td>
             <td>{{ booking.start_time }} - {{ booking.end_time }}</td>
-            <td>{{ booking.status === 1 ? 'Booked' : 'Available' }}</td>
+            <td>{{ bookingStatusLabel(booking.status) }}</td>
             <td>
-              <!-- <button v-if="booking.status==='close'" @click="updateBookingStatus(booking.id,'open')">Open</button>
-              <button v-else @click="updateBookingStatus(booking.id,'close')">Close</button> -->
-                <button v-if="booking.status === 1" @click="cancelBooking(booking.id)">Batalkan Booking</button>
-                <button v-else disabled>Tersedia</button>
+              <button v-if="booking.status === 0"@click="completeBooking(booking)">Tandai Selesai</button>
             </td>
           </tr>
         </tbody>
@@ -63,36 +60,35 @@
     </section>
 
     <!-- Section Time Slots -->
-<section style="margin-top:30px">
-  <h2>Daftar Time Slots</h2>
-  <table border="1" cellspacing="0" cellpadding="5">
-    <thead>
-      <tr>
-        <th>Lapangan</th>
-        <th>Jam Mulai</th>
-        <th>Jam Selesai</th>
-        <th>Harga</th>
-        <th>Status</th>
-        <th>Aksi</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr v-for="slot in timeSlots" :key="slot.id">
-        <td>{{ slot.field_name }}</td>
-        <td>{{ slot.start_time }}</td>
-        <td>{{ slot.end_time }}</td>
-        <td>Rp {{ slot.price }}</td>
-        <td>{{ slot.status === 1 ? 'Booked' : 'Tersedia' }}</td>
-        <td>
-          <button @click="editSlot(slot)">Edit</button>
-          <button @click="deleteSlot(slot.id)">Hapus</button>
-        </td>
-      </tr>
-    </tbody>
-  </table>
-  <button @click="addSlot" style="margin-top:10px">Tambah Time Slot</button>
-</section>
-
+    <section style="margin-top:30px">
+      <h2>Daftar Time Slots</h2>
+      <table border="1" cellspacing="0" cellpadding="5">
+        <thead>
+          <tr>
+            <th>Lapangan</th>
+            <th>Jam Mulai</th>
+            <th>Jam Selesai</th>
+            <th>Harga</th>
+            <th>Status</th>
+            <th>Aksi</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="slot in timeSlots" :key="slot.id">
+            <td>{{ slot.field_name }}</td>
+            <td>{{ slot.start_time }}</td>
+            <td>{{ slot.end_time }}</td>
+            <td>Rp {{ slot.price }}</td>
+            <td>{{ slot.status === 1 ? 'Booked' : 'Tersedia' }}</td>
+            <td>
+              <button @click="editSlot(slot)">Edit</button>
+              <button @click="deleteSlot(slot.id)">Hapus</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <button @click="addSlot" style="margin-top:10px">Tambah Time Slot</button>
+    </section>
   </div>
 </template>
 
@@ -170,30 +166,26 @@ async function deleteField(id) {
   loadFields()
 }
 
-// update status booking
-async function updateBookingStatus(id, status) {
-  const res = await fetch(`http://localhost:3000/api/bookings/${id}/status`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-    body: JSON.stringify({ status })
-  })
-  const data = await res.json()
-  alert(data.message)
-  loadBookings()
-}
+async function completeBooking(booking) {
+  if (!confirm('Tandai booking ini sebagai selesai?')) return
 
-async function cancelBooking(id) {
-  await fetch(`http://localhost:3000/api/bookings/${id}/status`, {
+  const res = await fetch(`http://localhost:3000/api/bookings/${booking.id}/status`, {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': 'Bearer ' + localStorage.getItem('token')
+      'Authorization': 'Bearer ' + token
     },
-    body: JSON.stringify({ status: 0 })
+    body: JSON.stringify({ status: 1 }) // 1 = complete
   })
-  // reload daftar booking
+
+  const data = await res.json()
+  alert(data.message)
+
+  // reload booking & slot
   loadBookings()
+  loadTimeSlots()
 }
+
 
 // fetch semua time slots
 async function loadTimeSlots() {
@@ -228,7 +220,7 @@ async function editSlot(slot) {
   const start = prompt('Jam Mulai:', slot.start_time) || slot.start_time
   const end = prompt('Jam Selesai:', slot.end_time) || slot.end_time
   const price = parseInt(prompt('Harga:', slot.price), 10) || slot.price
-  const status = parseInt(prompt('Status (0=Tersedia,1=Booked):', slot.status), 10)
+  // const status = parseInt(prompt('Status (0=Tersedia,1=Booked):', slot.status), 10)
 
   const res = await fetch(`http://localhost:3000/api/time-slots/${slot.id}`, {
     method: 'PUT',
@@ -252,6 +244,7 @@ async function deleteSlot(id) {
   loadTimeSlots()
 }
 
+
 // logout
 function logout() {
   localStorage.removeItem('token')
@@ -266,6 +259,12 @@ function formatDate(dateStr) {
   return `${day}-${month}-${year}`
 }
 
+function bookingStatusLabel(status) {
+  if (status === 0) return 'Aktif'
+  if (status === 1) return 'Selesai'
+  return '-'
+}
+
 // load data awal
 onMounted(() => {
     loadFields()
@@ -275,7 +274,7 @@ onMounted(() => {
 </script>
 
 <style scoped>
-/* Container utama */
+/* container utama */
 div {
   max-width: 900px;
   margin: 40px auto;

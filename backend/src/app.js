@@ -10,11 +10,11 @@ const app = express()
 app.use(cors())
 app.use(express.json())
 
+//endpoint
 app.use('/api/auth', authRoutes)
 app.use('/api/fields', fieldRoutes)
 app.use('/api/bookings', bookingRoutes)
 app.use('/api/time-slots', timeSlotRoutes)
-
 
 app.get('/api/test', (req, res) => {
   res.json({ message: 'API berjalan' })

@@ -10,7 +10,7 @@
     <table v-if="bookings.length" class="booking-table">
       <thead>
         <tr>
-          <th>#</th>
+          <th>No</th>
           <th>Lapangan</th>
           <th>Tanggal</th>
           <th>Jam</th>
@@ -24,7 +24,7 @@
           <td>{{ b.field_name }}</td>
           <td>{{ formatDate(b.booking_date) }}</td>
           <td>{{ b.start_time }} - {{ b.end_time }}</td>
-          <td>{{ b.status }}</td>
+          <td>{{ bookingStatusLabel(b.status) }}</td>
           <td>{{ b.total_price }}</td>
         </tr>
       </tbody>
@@ -66,6 +66,12 @@ async function loadBookingHistory() {
   } catch (err) {
     message.value = err.message
   }
+}
+
+function bookingStatusLabel(status) {
+  if (status === 0) return 'Aktif'
+  if (status === 1) return 'Selesai'
+  return '-'
 }
 
 onMounted(() => {

@@ -11,9 +11,10 @@ export async function getFields(req, res) {
   }
 }
 
-// GET /api/time-slots?field_id=1&date=2025-12-26
+// GET /api/time-slots
 export async function getTimeSlots(req, res) {
   const { field_id, date } = req.query
+
   try {
     // ambil semua time slots
     const [slots] = await db.query(
@@ -83,7 +84,7 @@ export async function createBooking(req, res) {
 
     // Insert booking
     await db.query(
-      'INSERT INTO bookings (user_id, field_id, time_slot_id, booking_date, total_price, status) VALUES (?, ?, ?, ?, ?, 1)',
+      'INSERT INTO bookings (user_id, field_id, time_slot_id, booking_date, total_price, status) VALUES (?, ?, ?, ?, ?, 0)',
       [user_id, field_id, time_slot_id, date, total_price]
     )
 
@@ -96,7 +97,6 @@ export async function createBooking(req, res) {
     res.status(500).json({ message: 'Server error' })
   }
 }
-
 
 // Ambil riwayat booking user yang login
 export async function getUserBooking(req, res) {
@@ -117,25 +117,81 @@ export async function getUserBooking(req, res) {
   }
 }
 
-// Cancel / update booking (Admin)
+// update booking status oleh admin
 export async function updateBookingStatus(req, res) {
-  const { id } = req.params       // id booking
-  const { status } = req.body     // 0 = batal, 1 = booked
+  const { id } = req.params
+  const { status } = req.body
+  // status: 0=booked, 1=selesai
 
-  // Ambil booking dulu
-  const [rows] = await db.query('SELECT * FROM bookings WHERE id = ?', [id])
-  if (rows.length === 0) return res.status(404).json({ message: 'Booking tidak ditemukan' })
+  try {
+    const [rows] = await db.query(
+      'SELECT time_slot_id, status FROM bookings WHERE id = ?',
+      [id]
+    )
 
-  const booking = rows[0]
+    if (rows.length === 0)
+      return res.status(404).json({ message: 'Booking tidak ditemukan' })
 
-  // Update status booking
-  await db.query('UPDATE bookings SET status = ? WHERE id = ?', [status, id])
+    const booking = rows[0]
 
-  // Update status time_slot agar bisa dipakai lagi jika dibatalkan
-  if (status === 0) {
-    await db.query('UPDATE time_slots SET status = 0 WHERE id = ?', [booking.time_slot_id])
+    // tidak boleh update kalau sudah selesai/batal
+    if (booking.status !== 0) {
+      return res.status(400).json({ message: 'Booking sudah tidak aktif' })
+    }
+
+    // update booking
+    await db.query(
+      'UPDATE bookings SET status = ? WHERE id = ?',
+      [status, id]
+    )
+
+    // kalau selesai / batal → buka slot
+    if (status === 1) {
+      await db.query(
+        'UPDATE time_slots SET status = 0 WHERE id = ?',
+        [booking.time_slot_id]
+      )
+    }
+
+    res.json({ message: 'Status booking berhasil diperbarui' })
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ message: 'Server error' })
   }
-
-  res.json({ message: 'Status booking berhasil diperbarui' })
 }
 
+// COMPLETE BOOKING (Admin)
+export async function completeBooking(req, res) {
+  const { id } = req.params
+
+  try {
+    // ambil booking
+    const [rows] = await db.query(
+      'SELECT time_slot_id FROM bookings WHERE id = ?',
+      [id]
+    )
+
+    if (rows.length === 0) {
+      return res.status(404).json({ message: 'Booking tidak ditemukan' })
+    }
+
+    const time_slot_id = rows[0].time_slot_id
+
+    // update booking jadi complete (1)
+    await db.query(
+      'UPDATE bookings SET status = 1 WHERE id = ?',
+      [id]
+    )
+
+    // buka kembali slot
+    await db.query(
+      'UPDATE time_slots SET status = 0 WHERE id = ?',
+      [time_slot_id]
+    )
+
+    res.json({ message: 'Booking selesai & slot dibuka kembali' })
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ message: 'Server error' })
+  }
+}
