@@ -1,16 +1,17 @@
 <template>
   <div class="container">
-    <h2>Riwayat Booking</h2>
+    <div class="content">
+      <h2>Riwayat Booking</h2>
 
-    <!-- Button kembali ke dashboard -->
-    <button class="btn-back" @click="goBack">Kembali ke Dashboard</button>
+      <!-- Button kembali ke dashboard -->
+      <button class="btn-back" @click="goBack">Kembali ke Dashboard</button>
 
-    <div v-if="message" class="message-error">{{ message }}</div>
+      <div v-if="message" class="message-error">{{ message }}</div>
 
-    <table v-if="bookings.length" class="booking-table">
+      <table v-if="bookings.length" class="booking-table">
       <thead>
         <tr>
-          <th>No</th>
+          <th>#</th>
           <th>Lapangan</th>
           <th>Tanggal</th>
           <th>Jam</th>
@@ -24,19 +25,46 @@
           <td>{{ b.field_name }}</td>
           <td>{{ formatDate(b.booking_date) }}</td>
           <td>{{ b.start_time }} - {{ b.end_time }}</td>
-          <td>{{ bookingStatusLabel(b.status) }}</td>
+          <td>{{ b.status }}</td>
           <td>{{ b.total_price }}</td>
         </tr>
       </tbody>
     </table>
 
     <p v-else class="no-data">Belum ada riwayat booking.</p>
+    </div>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        <div class="footer-brand">
+          <div class="footer-logo"><i class="fas fa-futball"></i> BookMyField</div>
+          <div class="footer-tagline">Solusi booking lapangan futsal yang cepat dan modern.</div>
+        </div>
+
+        <div class="footer-cols">
+          <div class="footer-col">
+            <div class="footer-col-title">Produk</div>
+            <a class="footer-link" href="#" @click.prevent="scrollToFields">Lapangan</a>
+            <a class="footer-link" href="#" @click.prevent="goRegister">Daftar</a>
+          </div>
+
+          <div class="footer-col">
+            <div class="footer-col-title">Lainnya</div>
+            <a class="footer-link" href="#" @click.prevent="goLogin">Login</a>
+            <a class="footer-link" href="#" @click.prevent="goHome">Beranda</a>
+          </div>
+        </div>
+      </div>
+      <div class="footer-bottom">&copy; 2025 BookMyField.</div>
+    </footer>
+    
   </div>
 </template>
 
 <script setup>
 import { useRouter } from 'vue-router'
 import { ref, onMounted } from 'vue'
+import { apiFetch } from '../api.js'
 
 const bookings = ref([])
 const message = ref('')
@@ -56,22 +84,10 @@ function formatDate(dateStr) {
 
 async function loadBookingHistory() {
   try {
-    const res = await fetch('http://localhost:3000/api/bookings/user', {
-      headers: {
-        'Authorization': 'Bearer ' + localStorage.getItem('token')
-      }
-    })
-    if (!res.ok) throw new Error('Gagal mengambil data')
-    bookings.value = await res.json()
+    bookings.value = await apiFetch('/api/bookings/user')
   } catch (err) {
-    message.value = err.message
+    message.value = err?.message || 'Gagal mengambil data'
   }
-}
-
-function bookingStatusLabel(status) {
-  if (status === 0) return 'Aktif'
-  if (status === 1) return 'Selesai'
-  return '-'
 }
 
 onMounted(() => {
@@ -79,14 +95,24 @@ onMounted(() => {
 })
 </script>
 
+
+
 <style scoped>
 /* Container pusat */
 .container {
   max-width: 800px;
-  margin: 50px auto;
+  margin: 0 auto;
   padding: 20px;
   text-align: center;
   font-family: Arial, sans-serif;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.content {
+  flex: 1;
+  margin-top: 50px;
 }
 
 /* Tombol kembali */
@@ -138,4 +164,81 @@ onMounted(() => {
   color: #666;
   margin-top: 10px;
 }
+
+.footer {
+  background: #0f0f0f;
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.footer-inner {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 34px 20px;
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 26px;
+}
+
+.footer-logo {
+  font-weight: 900;
+  color: #4caf50;
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.footer-tagline {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.95rem;
+}
+
+.footer-cols {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.footer-col-title {
+  font-weight: 900;
+  margin-bottom: 10px;
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.footer-link {
+  display: block;
+  color: rgba(255, 255, 255, 0.7);
+  text-decoration: none;
+  margin-bottom: 8px;
+}
+
+.footer-link:hover {
+  color: white;
+}
+
+.footer-bottom {
+  text-align: center;
+  padding: 16px 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 0.9rem;
+}
+
+@media (max-width: 900px) {
+  .features-inner {
+    grid-template-columns: 1fr;
+  }
+
+  .field-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .footer-inner {
+    grid-template-columns: 1fr;
+  }
+
+  .hero-title {
+    font-size: 2.6rem;
+  }
+}
+
 </style>

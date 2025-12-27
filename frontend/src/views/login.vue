@@ -1,102 +1,118 @@
 <template>
-  <div class="login-container">
-    <h2>Login</h2>
-    <form @submit.prevent="submit" class="login-form">
-      <input v-model="email" type="email" placeholder="Email" required />
-      <input v-model="password" type="password" placeholder="Password" required />
-      <button type="submit">Login</button>
-    </form>
-    <p v-if="message" class="message">{{ message }}</p>
+  <div class="auth-wrapper">
+    <div class="auth-card">
+      <div class="auth-header">
+        <i class="fas fa-user-circle"></i>
+        <h2>Selamat Datang Kembali</h2>
+        <p>Silakan masuk ke akun Anda</p>
+      </div>
+
+      <form @submit.prevent="submit" class="auth-form">
+        <div class="input-group">
+          <i class="fas fa-envelope"></i>
+          <input v-model="email" type="email" placeholder="Email Anda" required />
+        </div>
+        <div class="input-group">
+          <i class="fas fa-lock"></i>
+          <input v-model="password" type="password" placeholder="Password" required />
+        </div>
+        <button type="submit" class="btn-submit" :disabled="loading">Masuk Sekarang</button>
+      </form>
+      
+      <p v-if="message" class="message">{{ message }}</p>
+      
+      <div class="auth-footer">
+        Belum punya akun? <router-link to="/register">Daftar di sini</router-link>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { apiFetch } from '../api.js'
+
+const router = useRouter()
 
 const email = ref('')
 const password = ref('')
 const message = ref('')
-const router = useRouter()
+const loading = ref(false)
 
 async function submit() {
+  message.value = ''
+  loading.value = true
   try {
-    const res = await fetch('http://localhost:3000/api/auth/login', {
+    const data = await apiFetch('/api/auth/login', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: email.value, password: password.value })
+      auth: false,
+      body: {
+        email: email.value,
+        password: password.value,
+      },
     })
 
-    const data = await res.json()
-
-    if (res.ok) {
-      // simpan token
-      localStorage.setItem('token', data.token)
-      // redirect ke Dashboard
-      router.push('/dashboard')
-    } else {
-      message.value = data.message
+    if (!data?.token) {
+      throw new Error('Login gagal')
     }
+
+    localStorage.setItem('token', data.token)
+    router.push('/dashboard')
   } catch (err) {
-    message.value = err.message
+    message.value = err?.message || 'Login gagal'
+  } finally {
+    loading.value = false
   }
 }
 </script>
 
 <style scoped>
-/* Container login */
-.login-container {
+.auth-wrapper {
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #4caf50 0%, #2e7d32 100%);
+}
+.auth-card {
+  background: white;
+  padding: 40px;
+  border-radius: 20px;
+  width: 100%;
   max-width: 400px;
-  margin: 50px auto;
-  padding: 30px;
-  text-align: center;
-  border: 1px solid #ddd; /* garis tipis */
-  border-radius: 10px; /* sudut membulat */
-  background-color: #f9f9f9;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.1); /* bayangan halus */
+  box-shadow: 0 15px 35px rgba(0,0,0,0.2);
 }
+.auth-header { text-align: center; margin-bottom: 30px; }
+.auth-header i { font-size: 3rem; color: #4caf50; margin-bottom: 10px; }
+.auth-header h2 { margin: 0; color: #333; }
+.auth-header p { color: #777; font-size: 0.9rem; }
 
-/* Judul */
-h2 {
-  margin-bottom: 20px;
-  color: #333;
-  font-size: 24px;
-}
-
-/* Form login */
-.login-form input {
-  display: block;
+.input-group { position: relative; margin-bottom: 20px; }
+.input-group i { position: absolute; left: 15px; top: 12px; color: #aaa; }
+.input-group input {
   width: 100%;
-  padding: 10px;
-  margin-top: 10px;
-  border: 1px solid #ccc;
-  border-radius: 5px;
-  font-size: 16px;
+  padding: 12px 12px 12px 45px;
+  border: 2px solid #eee;
+  border-radius: 10px;
   box-sizing: border-box;
+  font-family: inherit;
 }
+.input-group input:focus { border-color: #4caf50; outline: none; }
 
-.login-form button {
+.btn-submit {
   width: 100%;
-  padding: 10px;
-  margin-top: 15px;
-  background-color: #4caf50; /* hijau */
+  padding: 12px;
+  background: #4caf50;
   color: white;
   border: none;
-  border-radius: 5px;
-  font-size: 16px;
+  border-radius: 10px;
+  font-weight: bold;
   cursor: pointer;
-  transition: background-color 0.3s;
+  transition: 0.3s;
 }
-
-/* Hover efek tombol */
-.login-form button:hover {
-  background-color: #45a049;
-}
-
-/* Pesan error / info */
-.message {
-  margin-top: 15px;
-  color: red;
-  font-size: 14px;
-}
+.btn-submit:hover { background: #45a049; transform: translateY(-2px); }
+.message { color: #f44336; margin-top: 15px; font-size: 0.85rem; }
+.auth-footer { margin-top: 25px; font-size: 0.9rem; color: #666; }
+.auth-footer a { color: #4caf50; font-weight: bold; text-decoration: none; }
 </style>

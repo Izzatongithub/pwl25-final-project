@@ -3,7 +3,7 @@
     <h1>Admin Panel</h1>
     <button @click="logout" style="margin-bottom:20px">Logout</button>
 
-    <!-- section lapangan -->
+    <!-- Section Lapangan -->
     <section>
       <h2>Daftar Lapangan</h2>
       <table border="1" cellspacing="0" cellpadding="5">
@@ -36,7 +36,6 @@
       <table border="1" cellspacing="0" cellpadding="5">
         <thead>
           <tr>
-            <th>Nama</th>
             <th>Lapangan</th>
             <th>Tanggal</th>
             <th>Jam</th>
@@ -46,13 +45,15 @@
         </thead>
         <tbody>
           <tr v-for="booking in bookings" :key="booking.id">
-            <td>{{ booking.user_name }}</td>
             <td>{{ booking.field_name }}</td>
             <td>{{ formatDate(booking.booking_date) }}</td>
             <td>{{ booking.start_time }} - {{ booking.end_time }}</td>
-            <td>{{ bookingStatusLabel(booking.status) }}</td>
+            <td>{{ booking.status === 1 ? 'Booked' : 'Available' }}</td>
             <td>
-              <button v-if="booking.status === 0"@click="completeBooking(booking)">Tandai Selesai</button>
+              <!-- <button v-if="booking.status==='close'" @click="updateBookingStatus(booking.id,'open')">Open</button>
+              <button v-else @click="updateBookingStatus(booking.id,'close')">Close</button> -->
+                <button v-if="booking.status === 1" @click="cancelBooking(booking.id)">Batalkan Booking</button>
+                <button v-else disabled>Tersedia</button>
             </td>
           </tr>
         </tbody>
@@ -60,44 +61,45 @@
     </section>
 
     <!-- Section Time Slots -->
-    <section style="margin-top:30px">
-      <h2>Daftar Time Slots</h2>
-      <table border="1" cellspacing="0" cellpadding="5">
-        <thead>
-          <tr>
-            <th>Lapangan</th>
-            <th>Jam Mulai</th>
-            <th>Jam Selesai</th>
-            <th>Harga</th>
-            <th>Status</th>
-            <th>Aksi</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="slot in timeSlots" :key="slot.id">
-            <td>{{ slot.field_name }}</td>
-            <td>{{ slot.start_time }}</td>
-            <td>{{ slot.end_time }}</td>
-            <td>Rp {{ slot.price }}</td>
-            <td>{{ slot.status === 1 ? 'Booked' : 'Tersedia' }}</td>
-            <td>
-              <button @click="editSlot(slot)">Edit</button>
-              <button @click="deleteSlot(slot.id)">Hapus</button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-      <button @click="addSlot" style="margin-top:10px">Tambah Time Slot</button>
-    </section>
+<section style="margin-top:30px">
+  <h2>Daftar Time Slots</h2>
+  <table border="1" cellspacing="0" cellpadding="5">
+    <thead>
+      <tr>
+        <th>Lapangan</th>
+        <th>Jam Mulai</th>
+        <th>Jam Selesai</th>
+        <th>Harga</th>
+        <th>Status</th>
+        <th>Aksi</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr v-for="slot in timeSlots" :key="slot.id">
+        <td>{{ slot.field_name }}</td>
+        <td>{{ slot.start_time }}</td>
+        <td>{{ slot.end_time }}</td>
+        <td>Rp {{ slot.price }}</td>
+        <td>{{ slot.status === 1 ? 'Booked' : 'Tersedia' }}</td>
+        <td>
+          <button @click="editSlot(slot)">Edit</button>
+          <button @click="deleteSlot(slot.id)">Hapus</button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+  <button @click="addSlot" style="margin-top:10px">Tambah Time Slot</button>
+</section>
+
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { apiFetch } from '../api.js'
 
 const router = useRouter()
-const token = localStorage.getItem('token')
 
 // state
 const fields = ref([])
@@ -106,18 +108,12 @@ const timeSlots = ref([])
 
 // fetch fields
 async function loadFields() {
-  const res = await fetch('http://localhost:3000/api/fields', {
-    headers: { 'Authorization': 'Bearer ' + token }
-  })
-  fields.value = await res.json()
+  fields.value = await apiFetch('/api/fields')
 }
 
 // fetch bookings
 async function loadBookings() {
-  const res = await fetch('http://localhost:3000/api/bookings', {
-    headers: { 'Authorization': 'Bearer ' + token }
-  })
-  bookings.value = await res.json()
+  bookings.value = await apiFetch('/api/bookings')
 }
 
 // tambah lapangan
@@ -127,13 +123,15 @@ async function addField() {
   const deskripsi = prompt('Deskripsi Lapangan:')
   if (!name || !type || !deskripsi) return alert('Data tidak lengkap')
 
-  const res = await fetch('http://localhost:3000/api/fields', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-    body: JSON.stringify({ name, type, deskripsi})
-  })
-  const data = await res.json()
-  alert(data.message)
+  try {
+    const data = await apiFetch('/api/fields', {
+      method: 'POST',
+      body: { name, type, deskripsi },
+    })
+    alert(data.message)
+  } catch (err) {
+    alert(err?.message || 'Gagal menambah lapangan')
+  }
   loadFields()
 }
 
@@ -141,15 +139,17 @@ async function addField() {
 async function editField(field) {
   const name = prompt('Nama Lapangan:', field.name) || field.name
   const type = prompt('Tipe Lapangan:', field.type) || field.type
-  const price = parseInt(prompt('Harga:', field.price), 10) || field.price
+  const deskripsi = prompt('Deskripsi Lapangan:', field.deskripsi) || field.deskripsi
 
-  const res = await fetch(`http://localhost:3000/api/fields/${field.id}`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-    body: JSON.stringify({ name, type, price })
-  })
-  const data = await res.json()
-  alert(data.message)
+  try {
+    const data = await apiFetch(`/api/fields/${field.id}`, {
+      method: 'PUT',
+      body: { name, type, deskripsi },
+    })
+    alert(data.message)
+  } catch (err) {
+    alert(err?.message || 'Gagal update lapangan')
+  }
   loadFields()
 }
 
@@ -157,42 +157,47 @@ async function editField(field) {
 async function deleteField(id) {
   if (!confirm('Hapus lapangan ini?')) return
 
-  const res = await fetch(`http://localhost:3000/api/fields/${id}`, {
-    method: 'DELETE',
-    headers: { 'Authorization': 'Bearer ' + token }
-  })
-  const data = await res.json()
-  alert(data.message)
+  try {
+    const data = await apiFetch(`/api/fields/${id}`, {
+      method: 'DELETE',
+    })
+    alert(data.message)
+  } catch (err) {
+    alert(err?.message || 'Gagal hapus lapangan')
+  }
   loadFields()
 }
 
-async function completeBooking(booking) {
-  if (!confirm('Tandai booking ini sebagai selesai?')) return
-
-  const res = await fetch(`http://localhost:3000/api/bookings/${booking.id}/status`, {
-    method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': 'Bearer ' + token
-    },
-    body: JSON.stringify({ status: 1 }) // 1 = complete
-  })
-
-  const data = await res.json()
-  alert(data.message)
-
-  // reload booking & slot
+// update status booking
+async function updateBookingStatus(id, status) {
+  try {
+    const data = await apiFetch(`/api/bookings/${id}/status`, {
+      method: 'PUT',
+      body: { status },
+    })
+    alert(data.message)
+  } catch (err) {
+    alert(err?.message || 'Gagal update booking')
+  }
   loadBookings()
-  loadTimeSlots()
 }
 
+async function cancelBooking(id) {
+  try {
+    await apiFetch(`/api/bookings/${id}/status`, {
+      method: 'PUT',
+      body: { status: 0 },
+    })
+  } catch (err) {
+    alert(err?.message || 'Gagal membatalkan booking')
+  }
+  // reload daftar booking
+  loadBookings()
+}
 
 // fetch semua time slots
 async function loadTimeSlots() {
-  const res = await fetch('http://localhost:3000/api/time-slots', {
-    headers: { 'Authorization': 'Bearer ' + token }
-  })
-  timeSlots.value = await res.json()
+  timeSlots.value = await apiFetch('/api/time-slots')
 }
 
 // tambah time slot
@@ -205,13 +210,15 @@ async function addSlot() {
     const price = parseInt(prompt('Harga:'), 10)
     if (!fieldId || !start || !end || !price) return alert('Data tidak lengkap')
 
-    const res = await fetch('http://localhost:3000/api/time-slots', {
+    try {
+      const data = await apiFetch('/api/time-slots', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-        body: JSON.stringify({ field_id: fieldId, start_time: start, end_time: end, price, status: 0 })
-    })
-    const data = await res.json()
-    alert(data.message)
+        body: { field_id: fieldId, start_time: start, end_time: end, price },
+      })
+      alert(data.message)
+    } catch (err) {
+      alert(err?.message || 'Gagal tambah slot')
+    }
     loadTimeSlots()
 }
 
@@ -220,30 +227,33 @@ async function editSlot(slot) {
   const start = prompt('Jam Mulai:', slot.start_time) || slot.start_time
   const end = prompt('Jam Selesai:', slot.end_time) || slot.end_time
   const price = parseInt(prompt('Harga:', slot.price), 10) || slot.price
-  // const status = parseInt(prompt('Status (0=Tersedia,1=Booked):', slot.status), 10)
+  const status = parseInt(prompt('Status (0=Tersedia,1=Booked):', slot.status), 10)
 
-  const res = await fetch(`http://localhost:3000/api/time-slots/${slot.id}`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-    body: JSON.stringify({ start_time: start, end_time: end, price, status })
-  })
-  const data = await res.json()
-  alert(data.message)
+  try {
+    const data = await apiFetch(`/api/time-slots/${slot.id}`, {
+      method: 'PUT',
+      body: { start_time: start, end_time: end, price, status },
+    })
+    alert(data.message)
+  } catch (err) {
+    alert(err?.message || 'Gagal update slot')
+  }
   loadTimeSlots()
 }
 
 // hapus slot
 async function deleteSlot(id) {
   if (!confirm('Hapus slot ini?')) return
-  const res = await fetch(`http://localhost:3000/api/time-slots/${id}`, {
-    method: 'DELETE',
-    headers: { 'Authorization': 'Bearer ' + token }
-  })
-  const data = await res.json()
-  alert(data.message)
+  try {
+    const data = await apiFetch(`/api/time-slots/${id}`, {
+      method: 'DELETE',
+    })
+    alert(data.message)
+  } catch (err) {
+    alert(err?.message || 'Gagal hapus slot')
+  }
   loadTimeSlots()
 }
-
 
 // logout
 function logout() {
@@ -259,12 +269,6 @@ function formatDate(dateStr) {
   return `${day}-${month}-${year}`
 }
 
-function bookingStatusLabel(status) {
-  if (status === 0) return 'Aktif'
-  if (status === 1) return 'Selesai'
-  return '-'
-}
-
 // load data awal
 onMounted(() => {
     loadFields()
@@ -274,7 +278,7 @@ onMounted(() => {
 </script>
 
 <style scoped>
-/* container utama */
+/* Container utama */
 div {
   max-width: 900px;
   margin: 40px auto;

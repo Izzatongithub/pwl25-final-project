@@ -6,6 +6,7 @@ import Dashboard from '../views/dashboard.vue'
 import Booking from '../views/booking.vue'
 import AdminPanel from '../views/adminPanel.vue'
 import BookingHistory from '../views/bookingHistory.vue'
+import { decodeJwtPayload } from '../api.js'
 
 const routes = [
   { path: '/', component: Landing }, // Landing bebas akses
@@ -29,11 +30,19 @@ const router = createRouter({
 // route guard
 router.beforeEach((to, from, next) => {
   const token = localStorage.getItem('token')
+  const payload = token ? decodeJwtPayload(token) : null
+  const hasValidToken = Boolean(token && payload)
 
-  if (to.meta.requiresAuth && !token) {
+  if (token && !payload) {
+    localStorage.removeItem('token')
+  }
+
+  if (to.meta.requiresAuth && !hasValidToken) {
     next('/login')
-  } else if ((to.path === '/login' || to.path === '/register') && token) {
+  } else if ((to.path === '/login' || to.path === '/register') && hasValidToken) {
     next('/dashboard') // redirect ke dashboard setelah login
+  } else if (to.meta.requiresAdmin && payload?.role !== 'admin') {
+    next('/dashboard')
   } else {
     next()
   }

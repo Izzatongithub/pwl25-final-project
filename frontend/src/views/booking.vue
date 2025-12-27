@@ -1,198 +1,299 @@
 <template>
-  <div class="container">
-    <h2>Booking Lapangan</h2>
-    <div v-if="message" class="message">{{ message }}</div>
-
-    <form @submit.prevent="submitBooking" class="form">
-      <div class="form-group">
-        <label>Lapangan</label>
-        <select v-model="selectedField" required>
-          <option value="">Pilih Lapangan</option>
-          <option v-for="f in fields" :key="f.id" :value="f.id">{{ f.name }}</option>
-        </select>
+  <div class="page-bg">
+    <div class="booking-container">
+      <div class="header">
+        <button class="back-btn" @click="$router.push('/dashboard')"><i class="fas fa-arrow-left"></i></button>
+        <h2>Reservasi Lapangan</h2>
       </div>
 
-      <div class="form-group">
-        <label>Tanggal</label>
-        <input type="date" v-model="date" required />
+      <div class="booking-card">
+        <div v-if="message" class="alert">{{ message }}</div>
+
+        <div v-if="selectedFieldData" class="field-detail">
+          <div class="field-image-lg">
+            <img :src="selectedFieldData.image || 'https://images.unsplash.com/photo-1604754742621-2f6d3b35a1d9?auto=format&fit=crop&w=1200&q=80'" :alt="selectedFieldData.name" />
+          </div>
+          <div class="field-info">
+            <h3 class="field-name">{{ selectedFieldData.name }}</h3>
+            <p class="field-desc">{{ selectedFieldData.deskripsi || selectedFieldData.type || 'Deskripsi tidak tersedia' }}</p>
+            <div class="field-meta">
+              <span class="meta-item"><i class="fas fa-map-marker-alt"></i> {{ selectedFieldData.location || 'Mataram' }}</span>
+              <span class="meta-item"><i class="fas fa-tag"></i> {{ selectedFieldData.type || '-' }}</span>
+            </div>
+          </div>
+          <div class="booking-icon">
+            <i class="fas fa-calendar-check"></i>
+          </div>
+        </div>
+
+        <form @submit.prevent="submitBooking">
+
+          <div class="form-group">
+            <label><i class="fas fa-calendar-day"></i> Pilih Tanggal</label>
+            <input type="date" v-model="date" required />
+          </div>
+
+          <div class="slot-section" v-if="slots.length > 0">
+            <label><i class="fas fa-clock"></i> Pilih Jam Tersedia</label>
+            <div class="slot-grid">
+              <div v-for="s in slots" :key="s.id" 
+                class="slot-item" 
+                :class="{ 'booked': !s.available, 'selected': selectedSlot === s.id }"
+                @click="s.available ? selectedSlot = s.id : null">
+                <span class="time">{{ s.start_time.substring(0,5) }}</span>
+                <span class="price">Rp {{ s.price.toLocaleString() }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="summary" v-if="selectedSlot">
+             <div class="total-row">
+               <span>Total Bayar:</span>
+               <span class="final-price">Rp {{ totalPrice.toLocaleString() }}</span>
+             </div>
+             <button type="submit" class="btn-confirm" :disabled="loading">Bayar & Booking Sekarang</button>
+          </div>
+        </form>
       </div>
+    </div>
 
-      <div class="form-group">
-        <label>Jam</label>
-        <select v-model="selectedSlot" required>
-          <option value="">Pilih Jam</option>
-          <option v-for="s in slots" :key="s.id" :value="s.id" :disabled="!s.available">
-            {{ s.start_time }} - {{ s.end_time }} {{ !s.available ? '(Booked)' : '' }}
-          </option>
-        </select>
+    <footer class="footer">
+      <div class="footer-inner">
+        <div class="footer-brand">
+          <div class="footer-logo"><i class="fas fa-futball"></i> BookMyField</div>
+          <div class="footer-tagline">Solusi booking lapangan futsal yang cepat dan modern.</div>
+        </div>
+
+        <div class="footer-cols">
+          <div class="footer-col">
+            <div class="footer-col-title">Produk</div>
+            <a class="footer-link" href="#" @click.prevent="scrollToFields">Lapangan</a>
+            <a class="footer-link" href="#" @click.prevent="goRegister">Daftar</a>
+          </div>
+
+          <div class="footer-col">
+            <div class="footer-col-title">Lainnya</div>
+            <a class="footer-link" href="#" @click.prevent="goLogin">Login</a>
+            <a class="footer-link" href="#" @click.prevent="goHome">Beranda</a>
+          </div>
+        </div>
       </div>
-
-      <div v-if="selectedSlot" class="total-price">
-        <strong>Total Harga: Rp {{ totalPrice }}</strong>
-      </div>
-
-      <button type="submit" class="btn">Booking</button>
-    </form>
-
-    <button @click="goBack" class="btn-back">Kembali ke Dashboard</button>
+      <div class="footer-bottom">&copy; 2025 BookMyField.</div>
+    </footer>
+    
   </div>
 </template>
 
 <script setup>
-import { useRouter } from 'vue-router'
-import { ref, watch, onMounted } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
+import { apiFetch } from '../api.js'
+
+const router = useRouter()
+const route = useRoute()
 
 const fields = ref([])
+const slots = ref([])
+
 const selectedField = ref('')
 const date = ref('')
-const slots = ref([])
-const selectedSlot = ref('')
-const totalPrice = ref(0)
-const message = ref('')
-const router = useRouter()
+const selectedSlot = ref(null)
 
-function goBack() {
-  router.push('/dashboard')
-}
+const message = ref('')
+const loading = ref(false)
+
+const totalPrice = computed(() => {
+  const slot = slots.value.find(s => s.id === selectedSlot.value)
+  return slot?.price || 0
+})
+
+const selectedFieldData = computed(() => {
+  return fields.value.find(f => String(f.id) === String(selectedField.value)) || null
+})
 
 async function loadFields() {
-  const res = await fetch('http://localhost:3000/api/fields', {
-    headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
-  })
-  fields.value = await res.json()
+  fields.value = await apiFetch('/api/fields')
 }
 
-watch([selectedField, date], async () => {
-  if (!selectedField.value || !date.value) {
-    slots.value = []
-    selectedSlot.value = ''
-    totalPrice.value = 0
+async function loadSlots() {
+  slots.value = []
+  selectedSlot.value = null
+  message.value = ''
+
+  if (!selectedField.value || !date.value) return
+
+  try {
+    const data = await apiFetch(`/api/bookings/time-slots?field_id=${selectedField.value}&date=${encodeURIComponent(date.value)}`)
+    slots.value = (Array.isArray(data) ? data : []).map(s => ({
+      ...s,
+      available: typeof s.available === 'boolean' ? s.available : s.status !== 1,
+    }))
+  } catch (err) {
+    message.value = err?.message || 'Gagal mengambil slot'
+  }
+}
+
+async function submitBooking() {
+  message.value = ''
+
+  if (!selectedField.value || !date.value || !selectedSlot.value) {
+    message.value = 'Lengkapi pilihan lapangan, tanggal, dan jam'
     return
   }
 
-  const res = await fetch(`http://localhost:3000/api/bookings/time-slots?field_id=${selectedField.value}&date=${date.value}`, {
-    headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
-  })
-  slots.value = await res.json()
-  selectedSlot.value = ''
-  totalPrice.value = 0
-})
-
-watch(selectedSlot, () => {
-  const slot = slots.value.find(s => s.id === selectedSlot.value)
-  totalPrice.value = slot ? slot.price : 0
-})
-
-async function submitBooking() {
-  if (!selectedField.value || !date.value || !selectedSlot.value) {
-    return alert('Lengkapi semua field terlebih dahulu!')
-  }
-
-  const res = await fetch('http://localhost:3000/api/bookings', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': 'Bearer ' + localStorage.getItem('token')
-    },
-    body: JSON.stringify({
-      field_id: selectedField.value,
-      date: date.value,
-      time_slot_id: selectedSlot.value,
-      total_price: totalPrice.value
+  loading.value = true
+  try {
+    const data = await apiFetch('/api/bookings', {
+      method: 'POST',
+      body: {
+        field_id: Number(selectedField.value),
+        date: date.value,
+        time_slot_id: Number(selectedSlot.value),
+      },
     })
-  })
 
-  const data = await res.json()
-  message.value = data.message
+    message.value = data?.message || 'Booking berhasil'
+    setTimeout(() => {
+      router.push('/booking-history')
+    }, 800)
+  } catch (err) {
+    message.value = err?.message || 'Booking gagal'
+  } finally {
+    loading.value = false
+  }
 }
 
-onMounted(() => {
-  loadFields()
+watch([selectedField, date], () => {
+  loadSlots()
+})
+
+onMounted(async () => {
+  const token = localStorage.getItem('token')
+  if (!token) {
+    router.push('/login')
+    return
+  }
+
+  try {
+    await loadFields()
+    // jika ada query field_id dari dashboard, pre-select
+    const qField = route.query.field_id || route.query.fieldId
+    if (qField) {
+      selectedField.value = String(qField)
+      // slots akan dimuat oleh watch pada selectedField/date
+    }
+  } catch (err) {
+    message.value = err?.message || 'Gagal mengambil lapangan'
+  }
 })
 </script>
 
 <style scoped>
-/* Kontainer utama */
-.container {
-  max-width: 480px;
-  margin: 40px auto;
-  padding: 20px;
-  background-color: #f9f9f9; /* latar belakang */
-  border-radius: 10px;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+.page-bg { padding: 40px 0; min-height: 100vh; display: flex; flex-direction: column; }
+.booking-container { max-width: 550px; margin: auto; padding: 0 20px; flex: 1; }
+.header { display: flex; align-items: center; gap: 15px; margin-bottom: 25px; }
+.back-btn { background: white; border: none; width: 45px; height: 45px; border-radius: 50%; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+.booking-card { background: white; border-radius: 30px; padding: 35px; box-shadow: 0 10px 40px rgba(0,0,0,0.05); }
+.form-group { margin-bottom: 20px; text-align: left; display: flex; flex-direction: column; }
+label { font-size: 0.85rem; font-weight: 700; color: #555; margin-bottom: 10px; }
+select, input { padding: 15px; border: 2px solid #f0f0f0; border-radius: 15px; font-family: inherit; font-size: 1rem; }
+select:focus { border-color: #4caf50; outline: none; }
+.slot-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 12px; margin-top: 10px; }
+.slot-item { border: 2px solid #f0f0f0; padding: 15px 10px; border-radius: 15px; cursor: pointer; text-align: center; transition: 0.2s; }
+.slot-item.selected { background: #4caf50; border-color: #4caf50; color: white; }
+.slot-item.selected .price { color: white; }
+.booked { background: #f9f9f9; opacity: 0.5; cursor: not-allowed; }
+.price { display: block; font-size: 0.75rem; color: #4caf50; font-weight: bold; }
+.btn-confirm { width: 100%; background: #4caf50; color: white; border: none; padding: 18px; border-radius: 15px; font-weight: bold; cursor: pointer; font-size: 1rem; margin-top: 20px; }
+
+.field-detail {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  margin-bottom: 18px;
+}
+.field-image-lg { width: 42%; max-width: 240px; border-radius: 12px; overflow: hidden; }
+.field-image-lg img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.field-info { flex: 1; text-align: left; }
+.field-name { margin: 0 0 6px; font-weight: 900; font-size: 1.05rem; }
+.field-desc { margin: 0 0 8px; color: rgba(0,0,0,0.7); }
+.field-meta { display: flex; gap: 12px; color: rgba(0,0,0,0.6); font-size: 0.9rem; }
+.meta-item i { margin-right: 6px; color: #2e7d32; }
+.booking-icon { font-size: 28px; color: #2e7d32; }
+
+.footer {
+  background: #0f0f0f;
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.footer-inner {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 34px 20px;
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 26px;
+}
+
+.footer-logo {
+  font-weight: 900;
+  color: #4caf50;
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.footer-tagline {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.95rem;
+}
+
+.footer-cols {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.footer-col-title {
+  font-weight: 900;
+  margin-bottom: 10px;
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.footer-link {
+  display: block;
+  color: rgba(255, 255, 255, 0.7);
+  text-decoration: none;
+  margin-bottom: 8px;
+}
+
+.footer-link:hover {
+  color: white;
+}
+
+.footer-bottom {
   text-align: center;
+  padding: 16px 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 0.9rem;
 }
 
-/* Pesan dari server */
-.message {
-  margin-bottom: 15px;
-  padding: 10px;
-  background-color: #e0f7fa; 
-  color: #00796b;
-  border-radius: 5px;
-}
+@media (max-width: 900px) {
+  .features-inner {
+    grid-template-columns: 1fr;
+  }
 
-/* Form dan grup input */
-.form {
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-}
+  .field-grid {
+    grid-template-columns: 1fr;
+  }
 
-.form-group {
-  display: flex;
-  flex-direction: column;
-  text-align: left;
-}
+  .footer-inner {
+    grid-template-columns: 1fr;
+  }
 
-label {
-  margin-bottom: 5px;
-  font-weight: 600;
-}
-
-input, select {
-  padding: 8px;
-  border: 1px solid #ccc;
-  border-radius: 5px;
-  font-size: 14px;
-}
-
-/* Tombol utama */
-.btn {
-  padding: 10px;
-  background-color: #4caf50;
-  color: white;
-  border: none;
-  border-radius: 5px;
-  font-weight: bold;
-  cursor: pointer;
-  transition: 0.3s;
-}
-
-.btn:hover {
-  background-color: #45a049;
-}
-
-/* Tombol kembali */
-.btn-back {
-  margin-top: 15px;
-  padding: 8px 16px;
-  background-color: #9e9e9e;
-  color: white;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-}
-
-.btn-back:hover {
-  background-color: #757575;
-}
-
-/* Total harga */
-.total-price {
-  margin-top: 5px;
-  font-size: 16px;
-  color: #333;
-  text-align: right;
+  .hero-title {
+    font-size: 2.6rem;
+  }
 }
 </style>
