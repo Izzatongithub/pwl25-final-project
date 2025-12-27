@@ -2,14 +2,18 @@
 
 Judul: Sistem Booking Lapangan (BookMyField), Sistem ini memungkinkan user untuk melihat lapangan, memilih slot waktu, melakukan booking, dan melihat riwayat booking. Admin dapat menambahkan/edit/hapus lapangan dan slot waktu, serta mengubah status booking.
 
-- Mba Aqila
-- Izzat
-- Wahyu
+- Qhaulan Syaqhila (F1D022152)
+- Izzat Nazhiefa (F1D02310114)
+- M. Wahyu Hilal Abroor (F1D02310123)
+
 
 ### Struktur Folder
 1. Backend
+<img width="150" height="448" alt="image" src="https://github.com/user-attachments/assets/a2cac672-ddcb-47f5-a273-874127c0dec3" />
+
 
 2. Frontend
+<img width="181" height="533" alt="image" src="https://github.com/user-attachments/assets/17805fe4-70cd-47a1-afef-c8a8e9011e8b" />
 
 
 ### Menjalankan Backend
@@ -51,76 +55,109 @@ Judul: Sistem Booking Lapangan (BookMyField), Sistem ini memungkinkan user untuk
 
 1. `app.use('/api/auth', authRoutes)` dengan endpoint:
     - `router.post('/register', validate(['username', 'password']), register)`
+      
     URL: http://localhost:3000/api/auth/register
+   
     Digunakan saat melakukan registrasi user baru
 
     - `router.post('/login', validate(['username', 'password']), login)`
+      
     URL: http://localhost:3000/api/auth/register
+   
     Digunakan saat user melakukan login
 
-
-2. `app.use('/api/fields', fieldRoutes)` dengan endpoint:
+3. `app.use('/api/fields', fieldRoutes)` dengan endpoint:
 
     - `router.get('/', getFields)`
+   
     URL: http://localhost:3000/api/fields
+   
     Digunakan saat ambil semua field/lapangan
 
     - `router.post('/', verifyToken, validate(['name', 'type', 'deskripsi']), isAdmin, addField)`
+      
     URL: http://localhost:3000/api/fields
+   
     Digunakan saat admin menambahkan field/lapangan baru
 
     - `router.put('/:id', verifyToken, isAdmin, updateField)`
+      
     URL: http://localhost:3000/api/fields/{id}
+   
     Digunakan saat admin edit data field/lapangan
 
     - `router.delete('/:id', verifyToken, isAdmin, deleteField)`
+      
     URL: http://localhost:3000/api/fields/{id}
+   
     Digunakan saat admin menghapus field/lapangan
 
-3. `app.use('/api/bookings', bookingRoutes)` dengan endpoint:
+5. `app.use('/api/bookings', bookingRoutes)` dengan endpoint:
 
     - `router.get('/', verifyToken, getBookings)`
+      
     URL: http://localhost:3000/api/bookings
+   
     Digunakan saat melihat daftar booking
 
     - `router.post('/', verifyToken, validate(['field_id', 'booking_date', 'time_slot_id']), createBooking)`
+      
     URL: http://localhost:3000/api/bookings
+   
     Digunakan saat user melakukan booking
 
     - `router.put('/:id/status', verifyToken, isAdmin, updateBookingStatus)`
+      
     URL: http://localhost:3000/api/bookings/:id/status
+   
     Digunakan saat admin mengubah status booking pengguna
 
     - `router.get('/fields', verifyToken, getFields)`
+      
     URL: http://localhost:3000/api/bookings/fields
+   
     Digunakan saat user melihat lapangan pada form booking
 
     - `router.get('/time-slots', verifyToken, getTimeSlots)`
+      
     URL: http://localhost:3000/api/bookings/time-slots
+   
     Digunakan saat user memilih jam booking yang tersedia di form booking
 
     - `router.get('/user', verifyToken, getUserBooking)`
+      
     URL: http://localhost:3000/api/bookings/user
+   
     Digunakan saat admin melihat daftar user yang telah melakukan booking
 
     - `router.put('/:id/complete', verifyToken, isAdmin, completeBooking)`
+      
     URL: http://localhost:3000/api/bookings/:id/complete
+   
     Digunakan saat admin mengubah status booking menjadi `selesai`
 
-4. `app.use('/api/time-slots', timeSlotRoutes)` dengan endpoint:
+7. `app.use('/api/time-slots', timeSlotRoutes)` dengan endpoint:
 
     - `router.get('/', verifyToken, getTimeSlots)`
+      
     URL: http://localhost:3000/api/time-slots
+   
     Digunakan saat menampilkan daftar jam lapangan
 
     - `router.post('/', verifyToken, isAdmin, addTimeSlot)`
+      
     URL: http://localhost:3000/api/time-slots
+   
     Digunakan saat admin menambah jam booking lapangan
 
     - `router.put('/:id', verifyToken, isAdmin, updateTimeSlot)`
+      
     URL: http://localhost:3000/api/time-slots/:id
+   
     Digunakan saat admin ingin mengubah data pada tabel time_slots
 
     - `router.delete('/:id', verifyToken, isAdmin, deleteTimeSlot)`
+      
     URL: http://localhost:3000/api/time-slots/:id
+   
     Digunakan saat admin ingin menghapus data jam lapangan
