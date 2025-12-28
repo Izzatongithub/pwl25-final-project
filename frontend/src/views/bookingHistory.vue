@@ -1,11 +1,11 @@
 <template>
   <div class="container">
-    <div class="content">
+    <header class="page-header">
       <h2>Riwayat Booking</h2>
-
-      <!-- Button kembali ke dashboard -->
       <button class="btn-back" @click="goBack">Kembali ke Dashboard</button>
+    </header>
 
+    <div class="content">
       <div v-if="message" class="message-error">{{ message }}</div>
 
       <table v-if="bookings.length" class="booking-table">
@@ -25,7 +25,7 @@
           <td>{{ b.field_name }}</td>
           <td>{{ formatDate(b.booking_date) }}</td>
           <td>{{ b.start_time }} - {{ b.end_time }}</td>
-          <td>{{ b.status }}</td>
+          <td>{{ bookingStatusLabel(b.status) }}</td>
           <td>{{ b.total_price }}</td>
         </tr>
       </tbody>
@@ -79,7 +79,13 @@ function formatDate(dateStr) {
   const day = String(date.getDate()).padStart(2, '0')
   const month = String(date.getMonth() + 1).padStart(2, '0')
   const year = date.getFullYear()
-  return `${day}-${month}-${year}`
+  return ${day}-${month}-${year}
+}
+
+function bookingStatusLabel(status) {
+  if (status === 0) return 'Aktif'
+  if (status === 1) return 'Selesai'
+  return '-'
 }
 
 async function loadBookingHistory() {
@@ -100,21 +106,37 @@ onMounted(() => {
 <style scoped>
 /* Container pusat */
 .container {
-  width: 100vw;
-  height: 100vh;
+  width: 100%;
+  min-height: 100vh;
   margin: 0;
-  padding: 20px;
+  padding: 0;
   box-sizing: border-box;
-  text-align: center;
   font-family: Arial, sans-serif;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
 }
+
+.page-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 68px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  background: #fff;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+  z-index: 9000;
+}
+.page-header h2 { margin: 0; }
+.page-header .btn-back { margin: 0; }
 
 .content {
   flex: 1;
-  margin-top: 50px;
+  margin-top: 68px; /* space for fixed header */
+  padding: 0; /* make content full-bleed */
   overflow: auto;
 }
 
@@ -142,9 +164,11 @@ onMounted(() => {
 
 /* Tabel booking */
 .booking-table {
-  width: 100%;
+  width: 98%;
   border-collapse: collapse;
-  margin-top: 10px;
+  margin-top: 20px;
+  margin-left: 15px;
+  margin-right: 10px;
 }
 
 .booking-table th,
@@ -174,9 +198,10 @@ onMounted(() => {
 }
 
 .footer-inner {
-  max-width: 1100px;
-  margin: 0 auto;
-  padding: 34px 20px;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 20px;
   display: grid;
   grid-template-columns: 1.4fr 1fr;
   gap: 26px;
