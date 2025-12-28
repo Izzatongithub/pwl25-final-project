@@ -33,13 +33,7 @@
         </div>
       </section>
 
-      <section v-else-if="userRole === 'admin'" class="admin-box">
-        <div class="admin-card">
-          <div class="admin-title">Akun Admin</div>
-          <div class="admin-desc">Kelola data lapangan, slot waktu, dan reservasi user.</div>
-          <button class="admin-button" type="button" @click="goAdmin">Buka Admin Panel</button>
-        </div>
-      </section>
+      <!-- admin UI moved to separate admin dashboard -->
     </main>
     
     <footer class="footer">

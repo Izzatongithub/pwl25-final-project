@@ -1,12 +1,18 @@
 <template>
-  <div style="max-width:900px; margin:auto">
-    <h1>Admin Panel</h1>
-    <button @click="logout" style="margin-bottom:20px">Logout</button>
+  <div class="admin-container">
+    <div class="admin-header">
+      <h1>Admin Panel</h1>
+      <div class="admin-actions">
+        <button class="btn-primary" @click="addField">Tambah Lapangan</button>
+        <button class="btn-primary" @click="addSlot">Tambah Time Slot</button>
+        <button class="btn-logout" @click="logout">Logout</button>
+      </div>
+    </div>
 
     <!-- Section Lapangan -->
     <section>
       <h2>Daftar Lapangan</h2>
-      <table border="1" cellspacing="0" cellpadding="5">
+      <table class="admin-table">
         <thead>
           <tr>
             <th>Nama</th>
@@ -27,13 +33,12 @@
           </tr>
         </tbody>
       </table>
-      <button @click="addField" style="margin-top:10px">Tambah Lapangan</button>
     </section>
 
     <!-- Section Booking -->
     <section style="margin-top:30px">
       <h2>Daftar Booking</h2>
-      <table border="1" cellspacing="0" cellpadding="5">
+      <table class="admin-table">
         <thead>
           <tr>
             <th>Lapangan</th>
@@ -62,8 +67,8 @@
 
     <!-- Section Time Slots -->
 <section style="margin-top:30px">
-  <h2>Daftar Time Slots</h2>
-  <table border="1" cellspacing="0" cellpadding="5">
+    <h2>Daftar Time Slots</h2>
+  <table class="admin-table">
     <thead>
       <tr>
         <th>Lapangan</th>
@@ -88,7 +93,6 @@
       </tr>
     </tbody>
   </table>
-  <button @click="addSlot" style="margin-top:10px">Tambah Time Slot</button>
 </section>
 
   </div>
@@ -278,92 +282,27 @@ onMounted(() => {
 </script>
 
 <style scoped>
-/* Container utama */
-div {
-  max-width: 900px;
-  margin: 40px auto;
-  padding: 20px;
-  background-color: #f9f9f9;
-  border-radius: 10px;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+.admin-container {
+  max-width: 980px;
+  margin: 24px auto;
+  padding: 18px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.06);
 }
+.admin-header { display:flex; justify-content:space-between; align-items:center; gap:12px }
+.admin-header h1 { margin:0 }
+.btn-logout { background:#f44336; color:#fff; border:none; padding:8px 12px; border-radius:8px }
+.btn-primary { background:#2e7d32; color:#fff; border:none; padding:8px 12px; border-radius:8px }
+ .admin-actions { display:flex; gap:8px; align-items:center }
 
-/* Judul halaman */
-h1 {
-  text-align: center;
-  color: #333;
-  margin-bottom: 20px;
-}
+section h2 { color:#2e7d32; margin-top:18px }
+.admin-table { width:100%; border-collapse:collapse; margin-top:10px }
+.admin-table th, .admin-table td { border:1px solid #eee; padding:10px; text-align:left }
+.admin-table th { background:#fafafa }
 
-/* Subjudul section */
-section h2 {
-  margin-bottom: 10px;
-  color: #4caf50;
-}
+button { cursor:pointer }
 
-/* Tabel */
-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-bottom: 10px;
-  font-size: 14px;
-}
-
-th, td {
-  padding: 10px;
-  border: 1px solid #ddd;
-  text-align: left;
-}
-
-th {
-  background-color: #f0f0f0;
-}
-
-/* Tombol */
-button {
-  padding: 6px 12px;
-  margin: 5px 2px;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  font-size: 14px;
-  transition: background-color 0.3s;
-}
-
-/* Tombol utama */
-button:hover {
-  opacity: 0.9;
-}
-
-/* Tombol aksi khusus */
-button[disabled] {
-  cursor: not-allowed;
-  opacity: 0.6;
-}
-
-/* Logout button */
-button:first-of-type {
-  background-color: #f44336; /* merah */
-  color: white;
-}
-
-/* Tombol aksi lapangan dan slot */
-button:not(:first-of-type) {
-  background-color: #4caf50; /* hijau */
-  color: white;
-}
-
-/* Section spacing */
-section {
-  margin-top: 30px;
-}
-
-/* Responsive: scroll horizontal untuk tabel kecil */
-@media (max-width: 768px) {
-  table {
-    display: block;
-    overflow-x: auto;
-  }
-}
+@media (max-width: 768px) { .admin-table { display:block; overflow-x:auto } }
 </style>
 

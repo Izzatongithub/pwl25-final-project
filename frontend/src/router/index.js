@@ -40,7 +40,9 @@ router.beforeEach((to, from, next) => {
   if (to.meta.requiresAuth && !hasValidToken) {
     next('/login')
   } else if ((to.path === '/login' || to.path === '/register') && hasValidToken) {
-    next('/dashboard') // redirect ke dashboard setelah login
+    // redirect ke halaman sesuai role
+    const dest = payload?.role === 'admin' ? '/admin' : '/dashboard'
+    next(dest)
   } else if (to.meta.requiresAdmin && payload?.role !== 'admin') {
     next('/dashboard')
   } else {

@@ -31,7 +31,7 @@
 <script setup>
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { apiFetch } from '../api.js'
+import { apiFetch, decodeJwtPayload } from '../api.js'
 
 const router = useRouter()
 
@@ -58,7 +58,9 @@ async function submit() {
     }
 
     localStorage.setItem('token', data.token)
-    router.push('/dashboard')
+    const payload = decodeJwtPayload(data.token)
+    const dest = payload?.role === 'admin' ? '/admin' : '/dashboard'
+    router.push(dest)
   } catch (err) {
     message.value = err?.message || 'Login gagal'
   } finally {
