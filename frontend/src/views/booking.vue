@@ -121,35 +121,23 @@ async function loadSlots() {
 
   if (!selectedField.value || !date.value) return
 
-  try {
+    try {
     const apiSlots = await apiFetch(`/api/bookings/time-slots?field_id=${selectedField.value}&date=${encodeURIComponent(date.value)}`) || []
 
-    // generate hourly slots from 07:00 to 12:00 (07-08, 08-09, ..., 11-12)
-    const startHour = 7
-    const endHour = 12
-    const generated = []
-    for (let h = startHour; h < endHour; h++) {
-      const hh = String(h).padStart(2, '0')
-      const hhNext = String(h + 1).padStart(2, '0')
-      // try to find matching api slot by start_time hour
-      const match = (Array.isArray(apiSlots) ? apiSlots : []).find(a => {
-        try {
-          return Number(a.start_time?.split(':')[0]) === h
-        } catch (e) { return false }
-      })
-
-      generated.push({
-        id: `${selectedField.value}_${date.value}_${h}`,
-        field_id: selectedField.value,
-        start_time: `${hh}:00:00`,
-        end_time: `${hhNext}:00:00`,
-        display: `${hh}.00-${hhNext}.00`,
-        price: match?.price || 0,
-        available: typeof match?.available === 'boolean' ? match.available : (match ? match.status !== 1 : true),
-      })
-    }
-
-    slots.value = generated
+    // Map API slots directly and format display like "HH.MM-HH.MM"
+    slots.value = (Array.isArray(apiSlots) ? apiSlots : []).map(s => {
+      const st = (s.start_time || '').substring(0,5).replace(':', '.')
+      const et = (s.end_time || '').substring(0,5).replace(':', '.')
+      return {
+        id: s.id,
+        field_id: s.field_id,
+        start_time: s.start_time,
+        end_time: s.end_time,
+        display: `${st}-${et}`,
+        price: s.price || 0,
+        available: typeof s.available === 'boolean' ? s.available : (s.status !== 1),
+      }
+    })
   } catch (err) {
     message.value = err?.message || 'Gagal mengambil slot'
   }
@@ -169,7 +157,7 @@ async function submitBooking() {
       method: 'POST',
       body: {
         field_id: Number(selectedField.value),
-        date: date.value,
+        booking_date: date.value,
         time_slot_id: Number(selectedSlot.value),
       },
     })

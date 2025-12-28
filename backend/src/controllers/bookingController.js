@@ -69,7 +69,7 @@ export async function getBookings(req, res) {
 }
 
 export async function createBooking(req, res) {
-  const { field_id, date, time_slot_id } = req.body
+  const { field_id, booking_date, time_slot_id } = req.body
   const user_id = req.user.id
 
   try {
@@ -80,12 +80,12 @@ export async function createBooking(req, res) {
     )
     if (slots.length === 0) return res.status(404).json({ message: 'Time slot tidak ditemukan' })
 
-    const total_price = slots[0].price // langsung ambil price dari time_slot
+    const total_price = slots[0].price
 
-    // Insert booking
+    // Insert booking (pakai booking_date sesuai validator / frontend)
     await db.query(
       'INSERT INTO bookings (user_id, field_id, time_slot_id, booking_date, total_price, status) VALUES (?, ?, ?, ?, ?, 0)',
-      [user_id, field_id, time_slot_id, date, total_price]
+      [user_id, field_id, time_slot_id, booking_date, total_price]
     )
 
     // Update status slot
