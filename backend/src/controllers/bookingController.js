@@ -24,7 +24,7 @@ export async function getTimeSlots(req, res) {
 
     // ambil booking yang sudah close di tanggal & lapangan tersebut
     const [booked] = await db.query(
-      `SELECT time_slot_id FROM bookings WHERE field_id=? AND booking_date=? AND status='close'`,
+      `SELECT time_slot_id FROM bookings WHERE field_id=? AND booking_date=? AND status=0`,
       [field_id, date]
     )
 
