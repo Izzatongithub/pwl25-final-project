@@ -9,17 +9,13 @@ import BookingHistory from '../views/bookingHistory.vue'
 import { decodeJwtPayload } from '../api.js'
 
 const routes = [
-  { path: '/', component: Landing }, // Landing bebas akses
+  { path: '/', component: Landing },
   { path: '/login', component: Login },
   { path: '/register', component: Register },
   { path: '/dashboard', component: Dashboard, meta: { requiresAuth: true } },
   { path: '/booking', component: Booking, meta: { requiresAuth: true } },
   { path: '/admin', component: AdminPanel, meta: { requiresAuth: true, requiresAdmin: true } },
-  {
-    path: '/booking-history',
-    component: BookingHistory,
-    meta: { requiresAuth: true }
-  }
+  { path: '/booking-history', component: BookingHistory, meta: { requiresAuth: true } }
 ]
 
 const router = createRouter({

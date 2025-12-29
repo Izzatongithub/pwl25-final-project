@@ -76,7 +76,6 @@ async function register() {
 </script>
 
 <style scoped>
-/* Styling sama dengan Login agar konsisten */
 .auth-wrapper { height: 100vh; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #4caf50 0%, #2e7d32 100%); }
 .auth-card { background: white; padding: 40px; border-radius: 20px; width: 100%; max-width: 400px; box-shadow: 0 15px 35px rgba(0,0,0,0.2); text-align: center;}
 .auth-header { margin-bottom: 25px; }

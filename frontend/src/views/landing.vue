@@ -39,8 +39,8 @@
         </div>
         <div class="feature">
           <div class="feature-icon"><i class="fas fa-star"></i></div>
-          <div class="feature-title">Trusted Reviews</div>
-          <div class="feature-desc">Temukan lapangan favorit dari ulasan user.</div>
+          <div class="feature-title">Trusted</div>
+          <div class="feature-desc">Temukan lapangan favorit yang terpercaya.</div>
         </div>
       </div>
     </section>

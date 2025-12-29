@@ -8,7 +8,7 @@
       <div class="topbar-center">Halo, {{ displayName }}</div>
 
       <div class="topbar-right">
-        <button v-if="userRole === 'user'" class="topbar-link" type="button" @click="goHistory">HISTORY</button>
+        <button v-if="userRole === 'user'" class="topbar-link" type="button" @click="goHistory"><i class="fas fa-history"></i></button>
         <button v-if="userRole === 'admin'" class="topbar-link" type="button" @click="goAdmin">ADMIN</button>
         <button class="topbar-logout" type="button" @click="logout"><i class="fas fa-sign-out-alt"></i> Keluar</button>
       </div>
@@ -32,8 +32,6 @@
           </div>
         </div>
       </section>
-
-      <!-- admin UI moved to separate admin dashboard -->
     </main>
     
     <footer class="footer">
