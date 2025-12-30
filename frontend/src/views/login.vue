@@ -85,13 +85,34 @@ async function submit() {
   max-width: 400px;
   box-shadow: 0 15px 35px rgba(0,0,0,0.2);
 }
-.auth-header { text-align: center; margin-bottom: 30px; }
-.auth-header i { font-size: 3rem; color: #4caf50; margin-bottom: 10px; }
-.auth-header h2 { margin: 0; color: #333; }
-.auth-header p { color: #777; font-size: 0.9rem; }
+.auth-header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+.auth-header i {
+  font-size: 3rem;
+  color: #4caf50;
+  margin-bottom: 10px;
+}
+.auth-header h2 {
+  margin: 0;
+  color: #333;
+}
+.auth-header p {
+  color: #777;
+  font-size: 0.9rem;
+}
 
-.input-group { position: relative; margin-bottom: 20px; }
-.input-group i { position: absolute; left: 15px; top: 12px; color: #aaa; }
+.input-group {
+  position: relative;
+  margin-bottom: 20px;
+}
+.input-group i {
+  position: absolute;
+  left: 15px;
+  top: 12px;
+  color: #aaa;
+}
 .input-group input {
   width: 100%;
   padding: 12px 12px 12px 45px;
@@ -100,7 +121,10 @@ async function submit() {
   box-sizing: border-box;
   font-family: inherit;
 }
-.input-group input:focus { border-color: #4caf50; outline: none; }
+.input-group input:focus {
+  border-color: #4caf50;
+  outline: none;
+}
 
 .btn-submit {
   width: 100%;
@@ -113,8 +137,23 @@ async function submit() {
   cursor: pointer;
   transition: 0.3s;
 }
-.btn-submit:hover { background: #45a049; transform: translateY(-2px); }
-.message { color: #f44336; margin-top: 15px; font-size: 0.85rem; }
-.auth-footer { margin-top: 25px; font-size: 0.9rem; color: #666; }
-.auth-footer a { color: #4caf50; font-weight: bold; text-decoration: none; }
+.btn-submit:hover {
+  background: #45a049;
+  transform: translateY(-2px);
+}
+.message {
+  color: #f44336;
+  margin-top: 15px;
+  font-size: 0.85rem;
+}
+.auth-footer {
+  margin-top: 25px;
+  font-size: 0.9rem;
+  color: #666;
+}
+.auth-footer a {
+  color: #4caf50;
+  font-weight: bold;
+  text-decoration: none;
+  }
 </style>

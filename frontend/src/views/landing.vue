@@ -130,7 +130,7 @@ onMounted(async () => {
   background: #f4f7f6;
 }
 
-/* pastikan footer berada di bawah ketika konten pendek */
+
 .landing .footer {
   margin-top: auto;
 }

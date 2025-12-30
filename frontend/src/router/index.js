@@ -24,7 +24,7 @@ const router = createRouter({
 })
 
 // route guard
-router.beforeEach((to, from, next) => {
+router.beforeEach((to, next) => {
   const token = localStorage.getItem('token')
   const payload = token ? decodeJwtPayload(token) : null
   const hasValidToken = Boolean(token && payload)

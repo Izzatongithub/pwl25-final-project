@@ -192,7 +192,7 @@ function logout() {
   max-width: 1200px;
   margin: 0 auto;
   padding: 26px 20px 50px;
-  flex: 1; /* biarkan area utama mengembang sehingga footer tetap di bawah */
+  flex: 1; 
 }
 
 .headline {
